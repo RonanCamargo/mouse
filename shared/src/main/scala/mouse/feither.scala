@@ -69,6 +69,12 @@ final class FEitherOps[F[_], L, R](private val felr: F[Either[L, R]]) extends An
   def getOrRaiseMsg(msg: => String)(implicit F: MonadThrow[F]): F[R] =
     getOrRaise[Throwable](new RuntimeException(msg))
 
+  def getOrRaiseLeft(implicit F: MonadError[F, _ >: L]): F[R] =
+    F.flatMap(felr) {
+      case Left(left)   => F.raiseError(left)
+      case Right(right) => F.pure(right)
+    }
+
   def getOrElseF[A >: R](right: => F[A])(implicit F: Monad[F]): F[A] =
     F.flatMap(felr)(_.fold(_ => right, F.pure))
 
